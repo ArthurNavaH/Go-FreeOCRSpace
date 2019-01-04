@@ -1,5 +1,12 @@
 package gofreeocr
 
+import (
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+)
+
 const (
 	// URL de la API POST
 	APIURL = "https://api.ocr.space/parse/image"
@@ -16,15 +23,32 @@ const (
 //Client Cliente de la API
 type Client struct {
 	apikey            string
-	isOverlayRequired bool
+	isOverlayRequired string
 }
 
 //NewClient Constructor Client
-func NewClient(ApiKey string, isOverlay bool) *Client {
+func NewClient(ApiKey string, isOverlay string) *Client {
 	return &Client{
 		apikey:            ApiKey,
 		isOverlayRequired: isOverlay,
 	}
+}
+
+//SendImage Envia la imagen a la API
+func (client *Client) SendImage(img *Image) (response *Response, err error) {
+	responseApi, err := http.PostForm(APIURL, url.Values{
+		"apikey":            {client.apikey},
+		"url":               {img.url},
+		"isoverlayrequired": {client.isOverlayRequired},
+		"language":          {img.language},
+	})
+	defer responseApi.Body.Close()
+
+	body, err := ioutil.ReadAll(responseApi.Body)
+
+	err = json.Unmarshal(body, &response)
+
+	return
 }
 
 //Image Imagen a enviar

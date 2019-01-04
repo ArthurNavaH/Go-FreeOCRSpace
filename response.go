@@ -5,7 +5,7 @@ type Response struct {
 	ErrorDetails          string
 	ErrorMessage          string
 	IsErroredOnProcessing bool
-	OCRExitCode           string
+	OCRExitCode           int
 	ParsedResults         []ParsedResult
 
 	ProcessingTimeInMilliseconds string
@@ -15,7 +15,7 @@ type Response struct {
 type ParsedResult struct {
 	ErrorDetails      string
 	ErrorMessage      string
-	FileParseExitCode string
+	FileParseExitCode int
 	ParsedText        string
 	TextOverlay       struct {
 		HasOverlay bool
@@ -25,15 +25,35 @@ type ParsedResult struct {
 }
 
 type Line struct {
-	MaxHeight int
-	MinTop    int
+	MaxHeight float32
+	MinTop    float32
 	Words     []Word
 }
 
 type Word struct {
-	Height   int
-	Left     int
-	Top      int
-	Width    int
+	Height   float32
+	Left     float32
+	Top      float32
+	Width    float32
 	WordText string
+}
+
+//TextPretty Retorna el texto original formateado como lo devolvio el API
+func (response Response) TextPretty() string {
+	return response.ParsedResults[0].ParsedText
+}
+
+//Text Retorna el texto sin saltos de lineas y retornos de carro
+func (response Response) Text() string {
+	text := []byte(response.ParsedResults[0].ParsedText)
+
+	for i := 0; i < len(text); i++ {
+		switch text[i] {
+		case '\n', '\r':
+			// text[i] = ' '
+			text = append(text[:i], text[i+2:]...)
+		}
+	}
+
+	return string(text)
 }
