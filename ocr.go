@@ -18,6 +18,8 @@ const (
 	JPG = "JPG"
 	TIF = "TIF"
 	BMP = "BMP"
+
+	UNDEFINED = "UNDEFINED"
 )
 
 //Client Cliente de la API
