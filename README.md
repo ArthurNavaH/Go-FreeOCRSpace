@@ -2,7 +2,7 @@
 Libreria de Golang para usar la OCR API de OCR.Space como servicio.
 
 # Ejemplo de uso
-`
+```go
 client := gofreeocr.NewClient("apikey", "true") // API Key
 
 img := gofreeocr.NewImage(
@@ -17,4 +17,4 @@ if err != nil {
 }
 
 fmt.Println(response.Text())
-`
+```
