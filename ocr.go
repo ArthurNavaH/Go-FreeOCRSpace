@@ -2,6 +2,8 @@ package gofreeocr
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -9,7 +11,12 @@ import (
 
 const (
 	// URL de la API POST
-	APIURL = "https://api.ocr.space/parse/image"
+	APIURL_POST = "https://api.ocr.space/parse/image"
+	// URL de la API GET
+	APIURL_GET = "https://api.ocr.space/parse/imageurl"
+
+	GET  = "GET"
+	POST = "POST"
 
 	// Lista de Filetypes soportados
 	PDF = "PDF"
@@ -24,6 +31,7 @@ const (
 
 //Client Cliente de la API
 type Client struct {
+	apiurl            string
 	apikey            string
 	isOverlayRequired string
 }
@@ -37,18 +45,42 @@ func NewClient(ApiKey string, isOverlay string) *Client {
 }
 
 //SendImage Envia la imagen a la API
-func (client *Client) SendImage(img *Image) (response *Response, err error) {
-	responseApi, err := http.PostForm(APIURL, url.Values{
-		"apikey":            {client.apikey},
-		"url":               {img.url},
-		"isoverlayrequired": {client.isOverlayRequired},
-		"language":          {img.language},
-	})
-	defer responseApi.Body.Close()
+func (client *Client) SendImage(img *Image, method string) (response *Response, err error) {
+	var responseApi *http.Response
 
-	body, err := ioutil.ReadAll(responseApi.Body)
+	if method == POST {
 
-	err = json.Unmarshal(body, &response)
+		responseApi, err = http.PostForm(APIURL_POST, url.Values{
+			"apikey":            {client.apikey},
+			"url":               {img.url},
+			"isoverlayrequired": {client.isOverlayRequired},
+			"language":          {img.language},
+		})
+		defer responseApi.Body.Close()
+
+		body, err := ioutil.ReadAll(responseApi.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		err = json.Unmarshal(body, &response)
+
+	} else if method == GET {
+		responseApi, err = http.Get(fmt.Sprintf("%s?apikey=%s&url=%s&language=%s&isOverlayRequired=%s&filetype=%s",
+			APIURL_GET, client.apikey, img.url, img.language, client.isOverlayRequired, img.filetype,
+		))
+
+		defer responseApi.Body.Close()
+
+		body, err := ioutil.ReadAll(responseApi.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		err = json.Unmarshal(body, &response)
+	} else {
+		err = errors.New(fmt.Sprintf("Metodo de la peticion no soportado : %s", method))
+	}
 
 	return
 }
